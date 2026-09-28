@@ -4,14 +4,17 @@ import com.example.Model.Course;
 import com.example.Model.Enrollment;
 import com.example.Model.FeedbackForm;
 import com.example.Model.FeedbackFormStatus;
+import com.example.Model.Question;
 import com.example.Model.Student;
 import com.example.Repo.CourseRepo;
 import com.example.Repo.EnrollmentRepo;
 import com.example.Repo.FeedbackFormRepo;
+import com.example.Repo.QuestionRepo;
 import com.example.Repo.StudentRepo;
 import com.example.Service.CourseServiceImpl;
 import com.example.Service.EnrollmentServiceImpl;
 import com.example.Service.FeedbackFormServiceImpl;
+import com.example.Service.QuestionServiceImpl;
 import com.example.Service.StudentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +48,9 @@ public class ServiceTest {
     @Mock
     private FeedbackFormRepo feedbackFormRepo;
 
+    @Mock
+    private QuestionRepo questionRepo;
+
     @InjectMocks
     private StudentServiceImpl studentService;
 
@@ -57,13 +63,18 @@ public class ServiceTest {
     @InjectMocks
     private FeedbackFormServiceImpl feedbackFormService;
 
+    @InjectMocks
+    private QuestionServiceImpl questionService;
+
     private Student student1;
     private Course course1;
+    private FeedbackForm form1;
 
     @BeforeEach
     void setUp() {
         student1 = new Student(1L, "STU001", "Alice Smith");
         course1 = new Course(10L, "Java Programming", "CS101", "Dr. John", "CS", "Spring 2026");
+        form1 = new FeedbackForm(1L, course1, "Spring 2026", FeedbackFormStatus.DRAFT, LocalDate.of(2026, 12, 31));
     }
 
     // --- STUDENT SERVICE TESTS ---
@@ -232,5 +243,54 @@ public class ServiceTest {
 
         FeedbackForm closed = feedbackFormService.closeFeedbackForm(50L);
         assertEquals(FeedbackFormStatus.CLOSED, closed.getStatus());
+    }
+
+    // --- QUESTION SERVICE TESTS ---
+
+    @Test
+    void testCreateQuestion_Success() {
+        Question request = new Question(null, new FeedbackForm(1L, null, null, null, null), "The instructor explained the concepts clearly.", 5);
+
+        when(feedbackFormRepo.findById(1L)).thenReturn(Optional.of(form1));
+        when(questionRepo.save(any(Question.class))).thenAnswer(invocation -> {
+            Question q = invocation.getArgument(0);
+            q.setId(200L);
+            return q;
+        });
+
+        Question created = questionService.createQuestion(request);
+        assertNotNull(created);
+        assertEquals(200L, created.getId());
+        assertEquals("The instructor explained the concepts clearly.", created.getQuestionText());
+        assertEquals(5, created.getMaxRating());
+    }
+
+    @Test
+    void testCreateQuestion_FeedbackFormNotFound() {
+        Question request = new Question(null, new FeedbackForm(999L, null, null, null, null), "Test question", 5);
+
+        when(feedbackFormRepo.findById(999L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> questionService.createQuestion(request));
+        assertTrue(ex.getReason().contains("Feedback form not found"));
+    }
+
+    @Test
+    void testCreateQuestion_EmptyQuestionText() {
+        Question request = new Question(null, new FeedbackForm(1L, null, null, null, null), "   ", 5);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> questionService.createQuestion(request));
+        assertTrue(ex.getReason().contains("Question text cannot be empty"));
+    }
+
+    @Test
+    void testCreateQuestion_InvalidMaxRating() {
+        Question request = new Question(null, new FeedbackForm(1L, null, null, null, null), "Test question", 10);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> questionService.createQuestion(request));
+        assertTrue(ex.getReason().contains("Max rating must be between 1 and 5"));
     }
 }
