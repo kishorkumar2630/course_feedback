@@ -85,6 +85,12 @@ public class ServiceTest {
     @InjectMocks
     private AnswerServiceImpl answerService;
 
+    @InjectMocks
+    private com.example.Service.AnalyticsServiceImpl analyticsService;
+
+    @InjectMocks
+    private com.example.Service.ReportServiceImpl reportService;
+
     private Student student1;
     private Course course1;
     private FeedbackForm form1;
@@ -408,5 +414,86 @@ public class ServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> answerService.createAnswer(request));
         assertTrue(ex.getReason().contains("Rating must be between 1 and 5"));
+    }
+
+    // --- ANALYTICS SERVICE TESTS ---
+
+    @Test
+    void testGetFormAnalytics_Success() {
+        Question q1 = new Question(200L, publishedForm, "Q1", 5);
+        Question q2 = new Question(201L, publishedForm, "Q2", 5);
+
+        Response resp1 = new Response(300L, student1, publishedForm, LocalDateTime.now());
+        Answer a1 = new Answer(400L, resp1, q1, 4);
+        Answer a2 = new Answer(401L, resp1, q1, 5);
+
+        when(feedbackFormRepo.findById(2L)).thenReturn(Optional.of(publishedForm));
+        when(questionRepo.findByFeedbackFormId(2L)).thenReturn(Arrays.asList(q1, q2));
+        when(answerRepo.findByQuestionId(200L)).thenReturn(Arrays.asList(a1, a2));
+        when(answerRepo.findByQuestionId(201L)).thenReturn(Arrays.asList());
+
+        java.util.Map<String, Object> result = analyticsService.getFormAnalytics(2L);
+        assertNotNull(result);
+        assertEquals(2L, result.get("feedbackFormId"));
+        assertEquals(4.5, result.get("overallRating"));
+    }
+
+    @Test
+    void testGetFormAnalytics_NotFound() {
+        when(feedbackFormRepo.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> analyticsService.getFormAnalytics(999L));
+    }
+
+    // --- REPORT SERVICE TESTS ---
+
+    @Test
+    void testGetInstructorReport_Success() {
+        when(courseRepo.findByInstructor("Dr. John")).thenReturn(Arrays.asList(course1));
+        when(feedbackFormRepo.findByCourseId(10L)).thenReturn(Arrays.asList(publishedForm));
+
+        Question q1 = new Question(200L, publishedForm, "Q1", 5);
+        Response resp1 = new Response(300L, student1, publishedForm, LocalDateTime.now());
+        Answer a1 = new Answer(400L, resp1, q1, 4);
+
+        when(questionRepo.findByFeedbackFormId(2L)).thenReturn(Arrays.asList(q1));
+        when(answerRepo.findByQuestionId(200L)).thenReturn(Arrays.asList(a1));
+
+        java.util.Map<String, Object> report = reportService.getInstructorReport("Dr. John");
+        assertNotNull(report);
+        assertEquals("Dr. John", report.get("instructor"));
+        assertEquals(4.0, report.get("overallInstructorAverage"));
+    }
+
+    @Test
+    void testGetInstructorReport_NotFound() {
+        when(courseRepo.findByInstructor("Unknown")).thenReturn(Arrays.asList());
+
+        assertThrows(ResponseStatusException.class, () -> reportService.getInstructorReport("Unknown"));
+    }
+
+    @Test
+    void testGetDepartmentReport_Success() {
+        when(courseRepo.findByDepartment("CS")).thenReturn(Arrays.asList(course1));
+        when(feedbackFormRepo.findByCourseId(10L)).thenReturn(Arrays.asList(publishedForm));
+
+        Question q1 = new Question(200L, publishedForm, "Q1", 5);
+        Response resp1 = new Response(300L, student1, publishedForm, LocalDateTime.now());
+        Answer a1 = new Answer(400L, resp1, q1, 4);
+
+        when(questionRepo.findByFeedbackFormId(2L)).thenReturn(Arrays.asList(q1));
+        when(answerRepo.findByQuestionId(200L)).thenReturn(Arrays.asList(a1));
+
+        java.util.Map<String, Object> report = reportService.getDepartmentReport("CS");
+        assertNotNull(report);
+        assertEquals("CS", report.get("department"));
+        assertEquals(4.0, report.get("overallDepartmentAverage"));
+    }
+
+    @Test
+    void testGetDepartmentReport_NotFound() {
+        when(courseRepo.findByDepartment("Unknown")).thenReturn(Arrays.asList());
+
+        assertThrows(ResponseStatusException.class, () -> reportService.getDepartmentReport("Unknown"));
     }
 }
