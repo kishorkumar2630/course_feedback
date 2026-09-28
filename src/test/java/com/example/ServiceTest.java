@@ -2,12 +2,16 @@ package com.example;
 
 import com.example.Model.Course;
 import com.example.Model.Enrollment;
+import com.example.Model.FeedbackForm;
+import com.example.Model.FeedbackFormStatus;
 import com.example.Model.Student;
 import com.example.Repo.CourseRepo;
 import com.example.Repo.EnrollmentRepo;
+import com.example.Repo.FeedbackFormRepo;
 import com.example.Repo.StudentRepo;
 import com.example.Service.CourseServiceImpl;
 import com.example.Service.EnrollmentServiceImpl;
+import com.example.Service.FeedbackFormServiceImpl;
 import com.example.Service.StudentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +42,9 @@ public class ServiceTest {
     @Mock
     private EnrollmentRepo enrollmentRepo;
 
+    @Mock
+    private FeedbackFormRepo feedbackFormRepo;
+
     @InjectMocks
     private StudentServiceImpl studentService;
 
@@ -45,6 +53,9 @@ public class ServiceTest {
 
     @InjectMocks
     private EnrollmentServiceImpl enrollmentService;
+
+    @InjectMocks
+    private FeedbackFormServiceImpl feedbackFormService;
 
     private Student student1;
     private Course course1;
@@ -157,5 +168,69 @@ public class ServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> enrollmentService.createEnrollment(request));
         assertTrue(ex.getReason().contains("already enrolled"));
+    }
+
+    // --- FEEDBACK FORM SERVICE TESTS ---
+
+    @Test
+    void testCreateFeedbackForm_Success() {
+        FeedbackForm request = new FeedbackForm(null, new Course(10L, null, null, null, null, null), "Spring 2026", null, LocalDate.of(2026, 12, 31));
+
+        when(courseRepo.findById(10L)).thenReturn(Optional.of(course1));
+        when(feedbackFormRepo.save(any(FeedbackForm.class))).thenAnswer(invocation -> {
+            FeedbackForm saved = invocation.getArgument(0);
+            saved.setId(50L);
+            return saved;
+        });
+
+        FeedbackForm created = feedbackFormService.createFeedbackForm(request);
+        assertNotNull(created);
+        assertEquals(50L, created.getId());
+        assertEquals(FeedbackFormStatus.DRAFT, created.getStatus());
+        assertEquals("Spring 2026", created.getSemester());
+    }
+
+    @Test
+    void testCreateFeedbackForm_CourseNotFound() {
+        FeedbackForm request = new FeedbackForm(null, new Course(99L, null, null, null, null, null), "Spring 2026", null, LocalDate.of(2026, 12, 31));
+
+        when(courseRepo.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> feedbackFormService.createFeedbackForm(request));
+        assertTrue(ex.getReason().contains("Course not found"));
+    }
+
+    @Test
+    void testPublishFeedbackForm_Success() {
+        FeedbackForm form = new FeedbackForm(50L, course1, "Spring 2026", FeedbackFormStatus.DRAFT, LocalDate.of(2026, 12, 31));
+
+        when(feedbackFormRepo.findById(50L)).thenReturn(Optional.of(form));
+        when(feedbackFormRepo.save(any(FeedbackForm.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FeedbackForm published = feedbackFormService.publishFeedbackForm(50L);
+        assertEquals(FeedbackFormStatus.PUBLISHED, published.getStatus());
+    }
+
+    @Test
+    void testPublishFeedbackForm_InvalidStatus() {
+        FeedbackForm form = new FeedbackForm(50L, course1, "Spring 2026", FeedbackFormStatus.CLOSED, LocalDate.of(2026, 12, 31));
+
+        when(feedbackFormRepo.findById(50L)).thenReturn(Optional.of(form));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> feedbackFormService.publishFeedbackForm(50L));
+        assertTrue(ex.getReason().contains("Only DRAFT feedback forms can be published"));
+    }
+
+    @Test
+    void testCloseFeedbackForm_Success() {
+        FeedbackForm form = new FeedbackForm(50L, course1, "Spring 2026", FeedbackFormStatus.PUBLISHED, LocalDate.of(2026, 12, 31));
+
+        when(feedbackFormRepo.findById(50L)).thenReturn(Optional.of(form));
+        when(feedbackFormRepo.save(any(FeedbackForm.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FeedbackForm closed = feedbackFormService.closeFeedbackForm(50L);
+        assertEquals(FeedbackFormStatus.CLOSED, closed.getStatus());
     }
 }
