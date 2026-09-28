@@ -1,20 +1,26 @@
 package com.example;
 
+import com.example.Model.Answer;
 import com.example.Model.Course;
 import com.example.Model.Enrollment;
 import com.example.Model.FeedbackForm;
 import com.example.Model.FeedbackFormStatus;
 import com.example.Model.Question;
+import com.example.Model.Response;
 import com.example.Model.Student;
+import com.example.Repo.AnswerRepo;
 import com.example.Repo.CourseRepo;
 import com.example.Repo.EnrollmentRepo;
 import com.example.Repo.FeedbackFormRepo;
 import com.example.Repo.QuestionRepo;
+import com.example.Repo.ResponseRepo;
 import com.example.Repo.StudentRepo;
+import com.example.Service.AnswerServiceImpl;
 import com.example.Service.CourseServiceImpl;
 import com.example.Service.EnrollmentServiceImpl;
 import com.example.Service.FeedbackFormServiceImpl;
 import com.example.Service.QuestionServiceImpl;
+import com.example.Service.ResponseServiceImpl;
 import com.example.Service.StudentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +58,12 @@ public class ServiceTest {
     @Mock
     private QuestionRepo questionRepo;
 
+    @Mock
+    private ResponseRepo responseRepo;
+
+    @Mock
+    private AnswerRepo answerRepo;
+
     @InjectMocks
     private StudentServiceImpl studentService;
 
@@ -66,15 +79,23 @@ public class ServiceTest {
     @InjectMocks
     private QuestionServiceImpl questionService;
 
+    @InjectMocks
+    private ResponseServiceImpl responseService;
+
+    @InjectMocks
+    private AnswerServiceImpl answerService;
+
     private Student student1;
     private Course course1;
     private FeedbackForm form1;
+    private FeedbackForm publishedForm;
 
     @BeforeEach
     void setUp() {
         student1 = new Student(1L, "STU001", "Alice Smith");
         course1 = new Course(10L, "Java Programming", "CS101", "Dr. John", "CS", "Spring 2026");
         form1 = new FeedbackForm(1L, course1, "Spring 2026", FeedbackFormStatus.DRAFT, LocalDate.of(2026, 12, 31));
+        publishedForm = new FeedbackForm(2L, course1, "Spring 2026", FeedbackFormStatus.PUBLISHED, LocalDate.now().plusDays(10));
     }
 
     // --- STUDENT SERVICE TESTS ---
@@ -292,5 +313,100 @@ public class ServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> questionService.createQuestion(request));
         assertTrue(ex.getReason().contains("Max rating must be between 1 and 5"));
+    }
+
+    // --- RESPONSE SERVICE TESTS ---
+
+    @Test
+    void testCreateResponse_Success() {
+        Response request = new Response(null, new Student(1L, null, null), new FeedbackForm(2L, null, null, null, null), null);
+
+        when(studentRepo.findById(1L)).thenReturn(Optional.of(student1));
+        when(feedbackFormRepo.findById(2L)).thenReturn(Optional.of(publishedForm));
+        when(responseRepo.existsByStudentIdAndFeedbackFormId(1L, 2L)).thenReturn(false);
+        when(responseRepo.save(any(Response.class))).thenAnswer(invocation -> {
+            Response r = invocation.getArgument(0);
+            r.setId(300L);
+            return r;
+        });
+
+        Response created = responseService.createResponse(request);
+        assertNotNull(created);
+        assertEquals(300L, created.getId());
+        assertNotNull(created.getSubmittedAt());
+    }
+
+    @Test
+    void testCreateResponse_FormNotPublished() {
+        Response request = new Response(null, new Student(1L, null, null), new FeedbackForm(1L, null, null, null, null), null);
+
+        when(studentRepo.findById(1L)).thenReturn(Optional.of(student1));
+        when(feedbackFormRepo.findById(1L)).thenReturn(Optional.of(form1)); // status DRAFT
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> responseService.createResponse(request));
+        assertTrue(ex.getReason().contains("is not published"));
+    }
+
+    @Test
+    void testCreateResponse_DeadlinePassed() {
+        FeedbackForm expiredForm = new FeedbackForm(3L, course1, "Spring 2026", FeedbackFormStatus.PUBLISHED, LocalDate.now().minusDays(1));
+        Response request = new Response(null, new Student(1L, null, null), new FeedbackForm(3L, null, null, null, null), null);
+
+        when(studentRepo.findById(1L)).thenReturn(Optional.of(student1));
+        when(feedbackFormRepo.findById(3L)).thenReturn(Optional.of(expiredForm));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> responseService.createResponse(request));
+        assertTrue(ex.getReason().contains("deadline has passed"));
+    }
+
+    @Test
+    void testCreateResponse_DuplicateSubmission() {
+        Response request = new Response(null, new Student(1L, null, null), new FeedbackForm(2L, null, null, null, null), null);
+
+        when(studentRepo.findById(1L)).thenReturn(Optional.of(student1));
+        when(feedbackFormRepo.findById(2L)).thenReturn(Optional.of(publishedForm));
+        when(responseRepo.existsByStudentIdAndFeedbackFormId(1L, 2L)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> responseService.createResponse(request));
+        assertTrue(ex.getReason().contains("already submitted"));
+    }
+
+    // --- ANSWER SERVICE TESTS ---
+
+    @Test
+    void testCreateAnswer_Success() {
+        Response resp = new Response(300L, student1, publishedForm, LocalDateTime.now());
+        Question q = new Question(200L, publishedForm, "Clear explanation?", 5);
+        Answer request = new Answer(null, new Response(300L, null, null, null), new Question(200L, null, null, null), 4);
+
+        when(responseRepo.findById(300L)).thenReturn(Optional.of(resp));
+        when(questionRepo.findById(200L)).thenReturn(Optional.of(q));
+        when(answerRepo.save(any(Answer.class))).thenAnswer(invocation -> {
+            Answer a = invocation.getArgument(0);
+            a.setId(400L);
+            return a;
+        });
+
+        Answer created = answerService.createAnswer(request);
+        assertNotNull(created);
+        assertEquals(400L, created.getId());
+        assertEquals(4, created.getRating());
+    }
+
+    @Test
+    void testCreateAnswer_RatingOutOfBounds() {
+        Response resp = new Response(300L, student1, publishedForm, LocalDateTime.now());
+        Question q = new Question(200L, publishedForm, "Clear explanation?", 5);
+        Answer request = new Answer(null, new Response(300L, null, null, null), new Question(200L, null, null, null), 10);
+
+        when(responseRepo.findById(300L)).thenReturn(Optional.of(resp));
+        when(questionRepo.findById(200L)).thenReturn(Optional.of(q));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> answerService.createAnswer(request));
+        assertTrue(ex.getReason().contains("Rating must be between 1 and 5"));
     }
 }
