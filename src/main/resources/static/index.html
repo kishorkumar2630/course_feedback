@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Feedback System | Academic Analytics Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Off-Canvas Slide-Out Sidebar -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <aside id="app-sidebar" class="app-sidebar sidebar" aria-label="Main Navigation">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <span class="logo-icon-svg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </span>
+                <span class="logo-text">FeedbackFlow</span>
+            </div>
+            <button id="sidebar-close-btn" class="icon-btn" aria-label="Close menu">&times;</button>
+        </div>
+        
+        <div class="sidebar-user-card hidden" id="sidebar-user-info">
+            <div class="user-avatar" id="sidebar-user-avatar">U</div>
+            <div class="user-details">
+                <div class="user-name" id="sidebar-user-name">User Name</div>
+                <div class="user-role-badge" id="sidebar-user-role">Role</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#landing" class="nav-item active" data-target="landing-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Home</span>
+            </a>
+            <a href="#student-portal" class="nav-item role-nav hidden" data-role="student" data-target="student-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                <span>Student Portal</span>
+            </a>
+            <a href="#faculty-portal" class="nav-item role-nav hidden" data-role="faculty" data-target="faculty-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Faculty Portal</span>
+            </a>
+            <a href="#admin-portal" class="nav-item role-nav hidden" data-role="admin" data-target="admin-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Admin Dashboard</span>
+            </a>
+            <a href="#analytics-view" class="nav-item" data-target="analytics-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>Analytics Center</span>
+            </a>
+            <a href="#reports-view" class="nav-item" data-target="reports-view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>Reports Library</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button id="sidebar-login-btn" class="btn btn-primary w-full">Sign In / Demo Login</button>
+            <button id="sidebar-logout-btn" class="btn btn-outline btn-logout w-full hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Logout Session</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Top Navigation Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <button id="sidebar-toggle-btn" class="icon-btn menu-toggle" aria-label="Open sidebar menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <a href="#" class="brand-logo">
+                <span class="logo-mark-svg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </span>
+                <span class="brand-name">Course Feedback System</span>
+            </a>
+        </div>
+        
+        <div class="header-center">
+            <div class="global-search-wrapper">
+                <span class="search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="text" id="global-search" placeholder="Search courses, instructors, forms..." aria-label="Search">
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button id="theme-toggle-btn" class="icon-btn theme-toggle" title="Toggle Light/Dark Theme" aria-label="Toggle theme">
+                <span class="theme-icon light-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                </span>
+                <span class="theme-icon dark-icon hidden">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </span>
+            </button>
+            <div id="auth-header-action">
+                <button id="open-login-modal-btn" class="btn btn-primary">Sign In</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main id="main-content" class="main-layout">
+
+        <!-- LANDING VIEW -->
+        <section id="landing-view" class="view-section active">
+            <div class="hero-banner container">
+                <div class="hero-content">
+                    <span class="badge badge-accent mb-2">Academic Analytics Platform v2.0</span>
+                    <h1 class="hero-title">Empowering Academic Excellence Through Student Feedback</h1>
+                    <p class="hero-subtitle">
+                        A modern, closed-loop evaluation system enabling real-time student insights, automated analytics, and actionable faculty performance metrics.
+                    </p>
+                    <div class="hero-actions">
+                        <button id="hero-get-started-btn" class="btn btn-primary btn-lg">Get Started</button>
+                        <button id="hero-demo-login-btn" class="btn btn-glass btn-lg">Quick Demo Login</button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-pill">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Anonymous & Secure</span>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-number">Real-Time</span>
+                            <span class="stat-label">Analytics Engine</span>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-number">Multi-Role</span>
+                            <span class="stat-label">Student, Faculty & Admin</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="glass-card hero-preview-card">
+                        <div class="preview-header flex-between">
+                            <div class="flex-gap">
+                                <span class="preview-dot red"></span>
+                                <span class="preview-dot yellow"></span>
+                                <span class="preview-dot green"></span>
+                                <span class="preview-title">Live Feedback Summary</span>
+                            </div>
+                            <span class="badge badge-accent">Spring 2026</span>
+                        </div>
+                        <div class="preview-body">
+                            <div class="preview-metric flex-between">
+                                <span class="text-secondary font-semibold">Overall Course Satisfaction</span>
+                                <strong class="text-accent h3">4.8 / 5.0</strong>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: 92%;"></div>
+                            </div>
+                            <div class="preview-chart-mock">
+                                <div class="chart-column" style="height: 65%;" title="Teaching Quality"></div>
+                                <div class="chart-column" style="height: 85%;" title="Course Material"></div>
+                                <div class="chart-column" style="height: 95%;" title="Pacing"></div>
+                                <div class="chart-column" style="height: 75%;" title="Assignments"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="features-section container mt-4 mb-4">
+                <h2 class="section-title text-center">Comprehensive Feedback Platform</h2>
+                <div class="features-grid">
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-svg text-accent mb-3">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        </div>
+                        <h3>Student Evaluations</h3>
+                        <p class="text-secondary">Submit quick, structured course evaluations with rating bars, custom question support, and progress indicators.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-svg text-accent mb-3">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <h3>Faculty Insights</h3>
+                        <p class="text-secondary">View aggregated response stats, track ratings across semesters, and identify areas for pedagogical refinement.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-svg text-accent mb-3">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </div>
+                        <h3>Live Analytics</h3>
+                        <p class="text-secondary">Visual bar graphs, distribution scores, and metric breakdowns calculated dynamically per feedback form.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-svg text-accent mb-3">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <h3>Admin Management</h3>
+                        <p class="text-secondary">Full control over Students, Courses, Questions, Feedback Forms, and publish/close lifecycle statuses.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STUDENT VIEW -->
+        <section id="student-view" class="view-section hidden container">
+            <div class="page-header mb-4">
+                <h2 class="page-title">Student Dashboard</h2>
+                <p class="page-subtitle text-secondary" id="student-welcome-msg">Welcome! Submit feedback for your enrolled courses.</p>
+            </div>
+            
+            <div class="grid-layout cols-2">
+                <!-- Active Feedback Forms -->
+                <div class="glass-card p-4">
+                    <div class="card-header flex-between mb-3">
+                        <h3 class="card-title">Available Feedback Forms</h3>
+                        <span class="badge badge-accent" id="student-active-count">0 Available</span>
+                    </div>
+                    <div id="student-forms-list" class="cards-list">
+                        <div class="empty-state">
+                            <p>Loading available feedback forms...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enrolled Courses -->
+                <div class="glass-card p-4">
+                    <div class="card-header flex-between mb-3">
+                        <h3 class="card-title">Enrolled Courses</h3>
+                        <span class="badge badge-primary" id="student-courses-count">0 Enrolled</span>
+                    </div>
+                    <div id="student-courses-list" class="cards-list">
+                        <div class="empty-state">
+                            <p>Loading your courses...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FACULTY VIEW -->
+        <section id="faculty-view" class="view-section hidden container">
+            <div class="page-header mb-4">
+                <h2 class="page-title">Faculty Dashboard</h2>
+                <p class="page-subtitle text-secondary" id="faculty-welcome-msg">Manage feedback forms and review course ratings.</p>
+            </div>
+
+            <div class="glass-card p-4 mb-4">
+                <div class="card-header mb-3">
+                    <h3 class="card-title">My Courses & Feedback Forms</h3>
+                </div>
+                <div id="faculty-forms-list" class="cards-list">
+                    <div class="empty-state">
+                        <p>Loading faculty course data...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW -->
+        <section id="admin-view" class="view-section hidden container">
+            <div class="page-header mb-4">
+                <h2 class="page-title">Admin Management Portal</h2>
+                <p class="page-subtitle text-secondary">Full administrative control over students, courses, forms, and questions.</p>
+            </div>
+
+            <!-- Admin Sub-Navigation Tabs -->
+            <div class="tabs-nav mb-4">
+                <button class="tab-btn active" data-admin-tab="forms-tab">Feedback Forms</button>
+                <button class="tab-btn" data-admin-tab="questions-tab">Questions</button>
+                <button class="tab-btn" data-admin-tab="students-tab">Students</button>
+                <button class="tab-btn" data-admin-tab="courses-tab">Courses</button>
+                <button class="tab-btn" data-admin-tab="responses-tab">Responses</button>
+            </div>
+
+            <!-- ADMIN TAB 1: Feedback Forms -->
+            <div id="admin-forms-tab" class="admin-tab-content">
+                <div class="section-actions flex-between mb-3">
+                    <h3>Manage Feedback Forms</h3>
+                    <button id="btn-create-form" class="btn btn-primary">+ Create New Form</button>
+                </div>
+                <div class="table-responsive glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Course Name</th>
+                                <th>Course Code</th>
+                                <th>Semester</th>
+                                <th>Status</th>
+                                <th>Closing Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-forms-tbody">
+                            <tr><td colspan="7" class="text-center">Loading feedback forms...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 2: Questions -->
+            <div id="admin-questions-tab" class="admin-tab-content hidden">
+                <div class="section-actions flex-between mb-3">
+                    <h3>Manage Questions</h3>
+                    <button id="btn-create-question" class="btn btn-primary">+ Add New Question</button>
+                </div>
+                <div class="table-responsive glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Form ID</th>
+                                <th>Question Text</th>
+                                <th>Max Rating</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-questions-tbody">
+                            <tr><td colspan="5" class="text-center">Loading questions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 3: Students -->
+            <div id="admin-students-tab" class="admin-tab-content hidden">
+                <div class="section-actions flex-between mb-3">
+                    <h3>Manage Students</h3>
+                    <button id="btn-create-student" class="btn btn-primary">+ Register New Student</button>
+                </div>
+                <div class="table-responsive glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student ID / Reg No</th>
+                                <th>Full Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-students-tbody">
+                            <tr><td colspan="4" class="text-center">Loading students...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 4: Courses -->
+            <div id="admin-courses-tab" class="admin-tab-content hidden">
+                <div class="section-actions flex-between mb-3">
+                    <h3>Manage Courses</h3>
+                    <button id="btn-create-course" class="btn btn-primary">+ Add New Course</button>
+                </div>
+                <div class="table-responsive glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Code</th>
+                                <th>Course Name</th>
+                                <th>Instructor</th>
+                                <th>Department</th>
+                                <th>Semester</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-courses-tbody">
+                            <tr><td colspan="7" class="text-center">Loading courses...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 5: Responses -->
+            <div id="admin-responses-tab" class="admin-tab-content hidden">
+                <div class="section-actions flex-between mb-3">
+                    <h3>Submitted Responses</h3>
+                </div>
+                <div class="table-responsive glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student</th>
+                                <th>Form ID</th>
+                                <th>Submitted At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-responses-tbody">
+                            <tr><td colspan="5" class="text-center">Loading responses...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYTICS VIEW -->
+        <section id="analytics-view" class="view-section hidden container">
+            <div class="page-header mb-4">
+                <h2 class="page-title">Form Analytics Dashboard</h2>
+                <p class="page-subtitle text-secondary">Select a feedback form to inspect calculated rating averages and response distributions.</p>
+            </div>
+
+            <div class="glass-card mb-4 p-4">
+                <div class="form-group inline-form">
+                    <label for="analytics-form-select">Select Feedback Form:</label>
+                    <div class="flex-gap">
+                        <select id="analytics-form-select" class="form-input flex-1">
+                            <option value="">-- Choose Feedback Form --</option>
+                        </select>
+                        <button id="analytics-fetch-btn" class="btn btn-primary">Generate Analytics</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="analytics-results" class="hidden">
+                <div class="grid-layout cols-3 mb-4">
+                    <div class="metric-card glass-card p-4">
+                        <span class="metric-title text-secondary">Total Responses</span>
+                        <strong class="metric-value text-accent h2" id="analytics-total-responses">0</strong>
+                    </div>
+                    <div class="metric-card glass-card p-4">
+                        <span class="metric-title text-secondary">Overall Average Rating</span>
+                        <strong class="metric-value text-primary h2" id="analytics-overall-avg">0.0 / 5.0</strong>
+                        <div id="analytics-stars-display" class="text-amber mt-1" style="font-size: 18px;">★★★★★</div>
+                    </div>
+                    <div class="metric-card glass-card p-4">
+                        <span class="metric-title text-secondary">Form Status</span>
+                        <div><span class="badge badge-accent mt-2" id="analytics-form-status">ACTIVE</span></div>
+                    </div>
+                </div>
+
+                <div class="grid-layout cols-2 mb-4">
+                    <div class="glass-card p-4">
+                        <div class="card-header mb-3">
+                            <h3 class="card-title">Question Performance Breakdown</h3>
+                        </div>
+                        <div id="analytics-questions-breakdown">
+                            <!-- Question bars injected here -->
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-4">
+                        <div class="card-header mb-3">
+                            <h3 class="card-title">Rating Score Distribution</h3>
+                        </div>
+                        <div id="analytics-rating-distribution" class="pt-2">
+                            <!-- Distribution bars injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- REPORTS VIEW -->
+        <section id="reports-view" class="view-section hidden container">
+            <div class="page-header mb-4">
+                <h2 class="page-title">Performance Reports Library</h2>
+                <p class="page-subtitle text-secondary">Search and generate comprehensive evaluation reports for Instructors and Departments.</p>
+            </div>
+
+            <div class="tabs-nav mb-4">
+                <button class="tab-btn active" data-report-tab="instructor-report-tab">Instructor Report</button>
+                <button class="tab-btn" data-report-tab="department-report-tab">Department Report</button>
+            </div>
+
+            <!-- Instructor Report Tab -->
+            <div id="instructor-report-tab" class="report-tab-content">
+                <div class="glass-card mb-4 p-4">
+                    <div class="form-group inline-form">
+                        <label for="report-instructor-input">Instructor Name:</label>
+                        <div class="flex-gap">
+                            <input type="text" id="report-instructor-input" class="form-input flex-1" placeholder="e.g. Dr. John Doe">
+                            <button id="btn-search-instructor-report" class="btn btn-primary">Generate Instructor Report</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="instructor-report-results" class="glass-card p-4 hidden">
+                    <!-- Dynamic Instructor Report -->
+                </div>
+            </div>
+
+            <!-- Department Report Tab -->
+            <div id="department-report-tab" class="report-tab-content hidden">
+                <div class="glass-card mb-4 p-4">
+                    <div class="form-group inline-form">
+                        <label for="report-dept-input">Department Name:</label>
+                        <div class="flex-gap">
+                            <input type="text" id="report-dept-input" class="form-input flex-1" placeholder="e.g. Computer Science">
+                            <button id="btn-search-dept-report" class="btn btn-primary">Generate Department Report</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="department-report-results" class="glass-card p-4 hidden">
+                    <!-- Dynamic Department Report -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+        <div class="container footer-content">
+            <div class="footer-left">
+                <div class="footer-brand flex-gap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Course Feedback System</span>
+                </div>
+                <p class="footer-desc">Empowering continuous improvement in higher education through structured feedback analytics.</p>
+            </div>
+            <div class="footer-right">
+                <p class="developer-credits">Developed by: <strong>Kishor Kumar V</strong></p>
+                <p class="developer-email">Email: <a href="mailto:kishorkumar@gmail.com">kishorkumar@gmail.com</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container text-center">
+                <small>&copy; 2026 Course Feedback System. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- GLASSMORPHISM LOGIN MODAL -->
+    <div id="login-modal" class="modal-overlay hidden" aria-modal="true" role="dialog">
+        <div class="modal-container glass-modal-card">
+            <div class="modal-header">
+                <h3>Sign In / Quick Demo Login</h3>
+                <button id="close-login-modal-btn" class="icon-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary mb-3">Select a role pill to auto-fill demo credentials, or enter details:</p>
+                
+                <div class="role-selector-pills mb-4">
+                    <button type="button" class="role-pill active" data-role="student" data-user="student" data-pass="student123">
+                        Student
+                    </button>
+                    <button type="button" class="role-pill" data-role="faculty" data-user="faculty" data-pass="faculty123">
+                        Faculty
+                    </button>
+                    <button type="button" class="role-pill" data-role="admin" data-user="admin" data-pass="admin123">
+                        Admin
+                    </button>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group mb-3">
+                        <label for="login-username">Username / Student ID</label>
+                        <input type="text" id="login-username" class="form-input" value="student" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="form-input" value="student123" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full btn-lg">Log In to Portal</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEEDBACK SUBMISSION MODAL -->
+    <div id="feedback-modal" class="modal-overlay hidden" aria-modal="true" role="dialog">
+        <div class="modal-container glass-modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="feedback-modal-title">Submit Course Feedback</h3>
+                    <small id="feedback-modal-subtitle" class="text-secondary">Please rate each criteria below</small>
+                </div>
+                <button id="close-feedback-modal-btn" class="icon-btn" aria-label="Close feedback modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="feedback-submit-form">
+                    <input type="hidden" id="feedback-form-id">
+                    <div id="feedback-questions-container">
+                        <!-- Questions dynamically loaded here -->
+                    </div>
+                    <div class="modal-footer mt-4">
+                        <button type="button" id="cancel-feedback-btn" class="btn btn-outline">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Final Response</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRUD MODAL FOR ADMIN -->
+    <div id="crud-modal" class="modal-overlay hidden" aria-modal="true" role="dialog">
+        <div class="modal-container glass-modal-card">
+            <div class="modal-header">
+                <h3 id="crud-modal-title">Form</h3>
+                <button id="close-crud-modal-btn" class="icon-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="crud-modal-form">
+                    <div id="crud-form-fields">
+                        <!-- Injected dynamic fields -->
+                    </div>
+                    <div class="modal-footer mt-4">
+                        <button type="button" id="cancel-crud-btn" class="btn btn-outline">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Entity</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/student.js"></script>
+    <script src="js/faculty.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/feedback.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+</html>
